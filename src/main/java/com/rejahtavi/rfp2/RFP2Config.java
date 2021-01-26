@@ -62,6 +62,10 @@ public class RFP2Config
         @Name("Enable Status Messages")
         public boolean enableStatusMessages = true;
         
+        @Comment({ "Prevents hand items from covering your screen.", "Default: false" })
+        @Name("Unobtrusive Hand Items")
+        public boolean enableUOHItems = false;
+        
         @Comment({ "How far behind the camera to put the first person player model", "Default: 0.35" })
         @Name("Player Model Offset")
         @RangeDouble(

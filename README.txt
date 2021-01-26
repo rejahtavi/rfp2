@@ -59,9 +59,10 @@ BUILD INSTRUCTIONS (For Linux -- windows will use gradlew.bat instead of ./gradl
 
 4. Create a 'libs' folder in the /rfp2/ directory.
 
-5. Populate the 'libs' folder by downloading the latest 12.2 versions of these:
+5. Populate the 'libs' folder by downloading the latest 1.12.2 versions of these:
         CosmeticArmorReworked-1.12.2-(version).jar
         Morph-1.12.2-(version).jar
+	Baubles-1.12-(version).jar
 
 6. Build
     ./gradlew build

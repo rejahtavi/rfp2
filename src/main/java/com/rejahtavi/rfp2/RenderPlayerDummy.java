@@ -101,6 +101,14 @@ public class RenderPlayerDummy extends Render<EntityPlayerDummy>
                                  playerModel.bipedRightArmwear.showModel
         };
         
+        float[] modelOffsetState = { playerModel.bipedBody.offsetZ,
+                                     playerModel.bipedBodyWear.offsetZ,
+                                     playerModel.bipedLeftLeg.offsetZ,
+                                     playerModel.bipedLeftLegwear.offsetZ,
+                                     playerModel.bipedRightLeg.offsetZ,
+                                     playerModel.bipedRightLegwear.offsetZ
+        };
+        
         /*
          * With the routine, unlikely-to-fail stuff out of the way, try to make the remainder
          * of this routine as fail-safe as possible. It runs every frame, so we want to be able
@@ -144,6 +152,7 @@ public class RenderPlayerDummy extends Render<EntityPlayerDummy>
             float   playerModelOffset     = (float) RFP2Config.preferences.playerModelOffset;
             boolean isRealArmsEnabled     = RFP2.state.isRealArmsEnabled(player);
             boolean isHeadRotationEnabled = RFP2.state.isHeadRotationEnabled(player);
+            boolean isUOHItemsEnabled = RFP2Config.preferences.enableUOHItems;
             
             /*
              * Adjust Player Model:
@@ -227,9 +236,41 @@ public class RenderPlayerDummy extends Render<EntityPlayerDummy>
                 // Interpolate to get final rendering position
                 playerRenderAngle = this.linearInterpolate(player.prevRenderYawOffset, player.renderYawOffset, partialTicks);
                 
+                // If unobtrusive hand items is on, adjust the arms.
+                if (isUOHItemsEnabled) {
+                	// Adjust the arms depending on where the player's facing.
+                	// Moving just the arms will cause some problems, but there's a workaround.
+	                float prevPlayerModelOffset = playerModelOffset;
+	            	float positivePitch = player.rotationPitch;
+	            	if (positivePitch < 0) {positivePitch = 0;}
+	            	
+	            	// We don't want the player to see that their shoulders were dislocated,
+	            	// so move their shoulders back when they try to look at them.
+	            	float pitchPercent = positivePitch / 90;
+	            	float yawPercent = (float) (Math.abs(playerRenderAngle / 360 - player.rotationYaw / 360) / 0.14); if (yawPercent > 1) {yawPercent = 1;}
+	            	
+	            	// Here's the workaround.
+	            	// Move the entire model back,
+	            	playerModelOffset *= Math.max(pitchPercent, yawPercent);
+	            	
+	            	// then move the body and legs in a way that makes them look like they're stationary.
+	            	// It will now look like only the arms are moving.
+	            	playerModel.bipedBody.offsetZ = playerModelOffset * -1 + prevPlayerModelOffset;
+	            	playerModel.bipedBodyWear.offsetZ = playerModelOffset * -1 + prevPlayerModelOffset;
+	            	playerModel.bipedLeftLeg.offsetZ = playerModelOffset * -1 + prevPlayerModelOffset;
+	            	playerModel.bipedLeftLegwear.offsetZ = playerModelOffset * -1 + prevPlayerModelOffset;
+	            	playerModel.bipedRightLeg.offsetZ = playerModelOffset * -1 + prevPlayerModelOffset;
+	            	playerModel.bipedRightLegwear.offsetZ = playerModelOffset * -1 + prevPlayerModelOffset;
+	            	// Result:
+	            	// When the player looks forward, the arms will move away from the player's camera.
+	            	// This will make the hand items cover less of the player's screen.
+	            	// When the player down near the torso, move the arms back
+	            	// so they won't notice that both their shoulders were dislocated.
+                }
+                
                 // Update position of rendered body to include interpolation and model offset
-                playerRenderPosX += (playerModelOffset * Math.sin(Math.toRadians(playerRenderAngle)));
-                playerRenderPosZ -= (playerModelOffset * Math.cos(Math.toRadians(playerRenderAngle)));
+                playerRenderPosX += playerModelOffset * Math.sin(Math.toRadians(playerRenderAngle));
+                playerRenderPosZ -= playerModelOffset * Math.cos(Math.toRadians(playerRenderAngle));
             }
             
             /*
@@ -282,6 +323,13 @@ public class RenderPlayerDummy extends Render<EntityPlayerDummy>
             playerModel.bipedRightArm.showModel     = modelState[9];
             playerModel.bipedRightArmwear.isHidden  = modelState[10];
             playerModel.bipedRightArmwear.showModel = modelState[11];
+            
+        	playerModel.bipedBody.offsetZ           = modelOffsetState[0];
+        	playerModel.bipedBodyWear.offsetZ       = modelOffsetState[1];
+        	playerModel.bipedLeftLeg.offsetZ        = modelOffsetState[2];
+        	playerModel.bipedLeftLegwear.offsetZ    = modelOffsetState[3];
+        	playerModel.bipedRightLeg.offsetZ       = modelOffsetState[4];
+        	playerModel.bipedRightLegwear.offsetZ   = modelOffsetState[5];
             
             // Instruct compatibility handlers restore head models 
             for (RFP2CompatHandler handler : RFP2.compatHandlers)
